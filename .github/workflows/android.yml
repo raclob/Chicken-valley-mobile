@@ -3,7 +3,14 @@ name: Android prototype
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'downloads/**'
+      - '**/*.md'
   workflow_dispatch:
+
+concurrency:
+  group: android-mobile-main
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -14,6 +21,8 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -78,6 +87,18 @@ jobs:
           ])
           (config / 'editor_settings-4.6.tres').write_text(settings)
           pathlib.Path('builds').mkdir(exist_ok=True)
+      - name: Set increasing Android version
+        shell: python
+        run: |
+          import os, pathlib, re
+          build = int(os.environ['GITHUB_RUN_NUMBER'])
+          preset = pathlib.Path('export_presets.cfg')
+          text = preset.read_text()
+          text = re.sub(r'version/code=\d+', 'version/code=' + str(build + 2), text)
+          text = re.sub(r'version/name="[^"]+"', 'version/name="0.2.' + str(build) + '"', text)
+          preset.write_text(text)
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write('APK_VERSION=0.2.' + str(build) + '\n')
       - name: Build Android APK
         run: godot --headless --path . --export-debug Android builds/chicken-valley.apk
       - name: Upload APK
@@ -96,3 +117,24 @@ jobs:
         run: |
           gh release create "prototype-${GITHUB_RUN_NUMBER}" builds/chicken-valley.apk --target "${GITHUB_SHA}" --title "Chicken Valley Android prototype ${GITHUB_RUN_NUMBER}" --notes "Chicken Valley Mobile v0.2: wider battlefield, randomized obstacle routes, working fence delays, meat sales, farm expansion, guard dogs and coyotes. Offline match against an AI rival. Download chicken-valley.apk below and install on Android. Debug-signed prototype; real-device testing is still pending."
 
+      - name: Keep versioned APKs in downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p downloads
+          if [ ! -f downloads/chicken-valley-v0.2.apk ]; then
+            history_dir="$(mktemp -d)"
+            gh release download prototype-1 --pattern chicken-valley.apk --dir "$history_dir"
+            printf '%s  %s\n' '46d1b0b8fc7b2519bf1f259b40714041f67687256783403ee6b83df9e1ce2add' "$history_dir/chicken-valley.apk" | sha256sum --check
+            "$ANDROID_HOME/build-tools/35.0.1/apksigner" verify "$history_dir/chicken-valley.apk"
+            cp "$history_dir/chicken-valley.apk" downloads/chicken-valley-v0.2.apk
+          fi
+          cp builds/chicken-valley.apk "downloads/chicken-valley-v${APK_VERSION}.apk"
+          "$ANDROID_HOME/build-tools/35.0.1/apksigner" verify "downloads/chicken-valley-v${APK_VERSION}.apk"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f downloads/*.apk
+          git commit -m "Add Android APK v${APK_VERSION} to downloads [skip ci]"
+          git restore export_presets.cfg
+          git pull --rebase origin main
+          git push origin HEAD:main
