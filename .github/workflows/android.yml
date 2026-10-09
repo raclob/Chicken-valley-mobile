@@ -1,0 +1,98 @@
+name: Android prototype
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - name: Install Android export tools
+        run: sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.1'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.3
+          use-dotnet: false
+          include-templates: true
+      - name: Import project
+        run: godot --headless --editor --path . --import --quit
+      - name: Test farm economy and raids
+        run: godot --headless --path . --script tests.gd
+      - name: Test overhead mobile scene
+        run: godot --headless --path . --script mobile_tests.gd
+      - name: Scene smoke check
+        run: |
+          godot --headless --path . --quit-after 120 2>&1 | tee scene-check.log
+          if grep -Eq 'SCRIPT ERROR|Parse Error|Failed to load script' scene-check.log; then exit 1; fi
+      - name: Render mobile preview
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: xvfb-run -a godot --path . --rendering-method gl_compatibility --audio-driver Dummy -- --preview
+      - name: Upload mobile preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-preview
+          path: builds/mobile-preview.png
+          if-no-files-found: error
+          retention-days: 30
+      - name: Restore prototype signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/android-debug.keystore
+          key: chicken-valley-mobile-debug-key-v1
+      - name: Configure Android export
+        shell: python
+        run: |
+          import os, pathlib, subprocess
+          data = pathlib.Path.home() / '.local/share/godot'
+          config = pathlib.Path.home() / '.config/godot'
+          data.mkdir(parents=True, exist_ok=True)
+          config.mkdir(parents=True, exist_ok=True)
+          key = data / 'android-debug.keystore'
+          if not key.exists():
+              subprocess.run(['keytool', '-genkeypair', '-keystore', str(key), '-storepass', 'android', '-alias', 'androiddebugkey', '-keypass', 'android', '-dname', 'CN=Android Debug,O=Android,C=US', '-keyalg', 'RSA', '-keysize', '2048', '-validity', '10000'], check=True)
+          settings = '\n'.join([
+              '[gd_resource type="EditorSettings" format=3]',
+              '', '[resource]',
+              'export/android/java_sdk_path="' + os.environ['JAVA_HOME'] + '"',
+              'export/android/android_sdk_path="' + os.environ['ANDROID_HOME'] + '"',
+              'export/android/debug_keystore="' + str(key) + '"',
+              'export/android/debug_keystore_user="androiddebugkey"',
+              'export/android/debug_keystore_pass="android"',
+              '',
+          ])
+          (config / 'editor_settings-4.6.tres').write_text(settings)
+          pathlib.Path('builds').mkdir(exist_ok=True)
+      - name: Build Android APK
+        run: godot --headless --path . --export-debug Android builds/chicken-valley.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: chicken-valley-android
+          path: builds/chicken-valley.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Verify Android APK signature
+        run: '"$ANDROID_HOME/build-tools/35.0.1/apksigner" verify --verbose builds/chicken-valley.apk'
+      - name: Publish direct APK download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "prototype-${GITHUB_RUN_NUMBER}" builds/chicken-valley.apk --target "${GITHUB_SHA}" --title "Chicken Valley Android prototype ${GITHUB_RUN_NUMBER}" --notes "Chicken Valley Mobile v0.2: wider battlefield, randomized obstacle routes, working fence delays, meat sales, farm expansion, guard dogs and coyotes. Offline match against an AI rival. Download chicken-valley.apk below and install on Android. Debug-signed prototype; real-device testing is still pending."
+
