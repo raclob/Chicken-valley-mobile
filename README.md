@@ -1,5 +1,9 @@
 # Chicken Valley Mobile
 
+**[Download Android APK](https://github.com/raclob/Chicken-valley-mobile/releases/latest/download/chicken-valley.apk)** — tap this link on your Android phone, then open the downloaded `chicken-valley.apk` to install.
+
+[Downloads and installation instructions](downloads/README.md) · [Latest release](https://github.com/raclob/Chicken-valley-mobile/releases/latest)
+
 A mobile-first overhead farm rivalry game built with Godot 4.6.3. Grow chickens, build coops, improve defenses, and launch raids against an AI rival. The largest flock after four minutes wins.
 
 ## Play
@@ -27,4 +31,4 @@ The Android prototype workflow runs tests, renders a preview, exports a debug-si
 
 Run `godot --headless --path . --script tests.gd` for economy, meat sales, capacity, defense coverage, fence delays, route speeds, coyote protection, raid delivery, final scoring, and five complete seeded AI matches. Run `godot --headless --path . --script mobile_tests.gd` for purchase controls, expanded farm visuals, route animation positions, coyote nodes, overhead framing, and pause. Run `godot --headless --path . --quit-after 120` for scene startup.
 
-Tests and headless startup passed locally. Real-phone touch, visual rendering, APK building, and installation testing remain pending. Graphics are procedural placeholders. Play is offline against AI.
+Gameplay tests, mobile scene checks, headless startup, preview rendering, Android APK export, and APK signature verification passed in GitHub Actions. The APK is published under Releases. Real-phone touch and installation testing remain pending. Graphics are procedural placeholders. Play is offline against AI.
