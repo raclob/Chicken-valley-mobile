@@ -2,7 +2,7 @@
 
 **[Download Android APK](https://github.com/raclob/Chicken-valley-mobile/releases/latest/download/chicken-valley.apk)** — tap this link on your Android phone, then open the downloaded `chicken-valley.apk` to install.
 
-[Downloads and installation instructions](downloads/README.md) · [Latest release](https://github.com/raclob/Chicken-valley-mobile/releases/latest)
+[Versioned APK files in downloads](downloads) · [Latest release](https://github.com/raclob/Chicken-valley-mobile/releases/latest)
 
 A mobile-first overhead farm rivalry game built with Godot 4.6.3. Grow chickens, build coops, improve defenses, and launch raids against an AI rival. The largest flock after four minutes wins.
 
