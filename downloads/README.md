@@ -1,13 +1,12 @@
-# Download Chicken Valley Mobile
+# Android APK downloads
 
-**[Download chicken-valley.apk](https://github.com/raclob/Chicken-valley-mobile/releases/latest/download/chicken-valley.apk)**
+This folder stores the actual installable APK files. Previous versions are retained as new versions are added.
 
-The APK is available now. Download it directly on your Android phone; no ZIP extraction or GitHub sign-in is needed.
+- `chicken-valley-v0.2.apk`: original mobile v0.2 APK.
+- `chicken-valley-v0.2.<build>.apk`: subsequent builds, in increasing version order.
 
-1. Tap the APK link above.
-2. Open `chicken-valley.apk` from your phone's Downloads.
-3. Allow installation from your browser if Android asks, then tap Install.
+Choose the highest version number, open its file, and tap **Download raw file** in GitHub. Open the downloaded APK on your Android phone, allow installation from your browser if asked, and tap Install.
 
-The current APK contains the overhead mobile game, wider farms, randomized obstacle paths, fence defenses, meat sales, farm expansion, guard dogs, and coyotes. It is a debug-signed prototype for ARM64 phones; x86_64 emulators are supported too.
+The build workflow verifies each APK signature before committing it here. Android version codes increase with build numbers so newer APKs can update earlier installations. The separate app package is `org.chickenvalley.mobile`.
 
-Builds run automatically on pushes to `main`. APKs are published as [release assets](https://github.com/raclob/Chicken-valley-mobile/releases/latest), and the direct link above follows the latest release. The Android package is `org.chickenvalley.mobile`, separate from the original game.
+[Latest release download](https://github.com/raclob/Chicken-valley-mobile/releases/latest/download/chicken-valley.apk) is also available.
