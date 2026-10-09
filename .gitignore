@@ -1,0 +1,11 @@
+.godot/
+.runtime/
+builds/
+*.apk
+*.keystore
+export_credentials.cfg
+export_templates/
+feature_profiles/
+script_templates/
+text_editor_themes/
+
